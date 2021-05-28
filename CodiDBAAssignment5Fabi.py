@@ -1,24 +1,34 @@
-import pprint	#To print pretty
-import math		#To work with calculations
-from collections import OrderedDict 	#To order the Dictionaries easier
+import pprint #To print pretty
+import math #To work with calculations
 
 #Here we create a simulation example of a list of client demands. We receive the Arriving ID, the asking Data rate and the Premium priority of each client
-demand = {1:{'allocID':1,'bps':64000,'prem':1},
+demand = {	1:{'allocID':1,'bps':64000,'prem':1},
 			2:{'allocID':2,'bps':8000,'prem':0},
 			3:{'allocID':3,'bps':64000,'prem':1},
 			4:{'allocID':4,'bps':64000,'prem':0},
 			5:{'allocID':5,'bps':32000,'prem':0},
 			6:{'allocID':6,'bps':96000,'prem':0},
-			7:{'allocID':6,'bps':96000,'prem':1},
-}
+			7:{'allocID':7,'bps':96000,'prem':1},
+		}
 
 print("Client's demand:")
 print('\n')
 pprint.pprint(demand)
 
 #Now we are sorting the client Dictionary by "prem" order. Highest "prem" value goes first.
-#Source: https://realpython.com/python-ordereddict/#getting-started-with-pythons-ordereddict
-orderedDemand = OrderedDict(sorted(demand.items(), key=lambda item: item[1]['prem'], reverse=True))
+n=len(demand)
+# Traverse through all array elements
+for i in range(n):
+	# Last i elements are already in place
+	for j in range(1, n-i):
+		# traverse the array from 1 to n-i
+		# Swap if the element found is smaller than the next element
+		if demand[j]['prem'] < demand[j+1]['prem'] :
+			demand[j], demand[j+1] = demand[j+1], demand[j]
+print('\n')
+print ("Sorted array is:")
+pprint.pprint(demand)
+print('\n')
 
 #Some variables to work with, as mentioned in the reading Document ITU-T
 selDemand = dict()
@@ -32,8 +42,8 @@ limBW = 256000
 j=1
 
 #We iterate for item in the dictionary structure and do some code in it
-for i in orderedDemand:
-	aux = orderedDemand[i]
+for i in demand:
+	aux = demand[i]
 
 	#If the 'prem' section of the current item has value=1, more bandwidth is assigned in order to have priority in he uplink
 	if aux['prem'] == 1:
@@ -42,14 +52,14 @@ for i in orderedDemand:
 		Rl = 16000
 
 	selDemand[j] = dict()
-	
+
 	bps = aux['bps']
-	
+
 	#A new dictionary is created in order to introduce new values regarding the old dictionary and the applying BW
 	selDemand[j]['allocID'] = aux['allocID']
 	selDemand[j]['bps'] = aux['bps']
 	selDemand[j]['prem'] = aux['prem']
-	
+
 	#We decide the amount of BW that has to be assigned to each client looking at the priority indicated above and the amount of bandwidth the client is asking for, so more or less BW can be assigned and no excessive BW is consumed
 	if bps <= Rf:
 		selBw = Rf
@@ -61,8 +71,7 @@ for i in orderedDemand:
 		selBW = Rm + Rl
 		if selBW == limBW:
 			selDemand[j]['selBW'] = strng
-
-		#if the bandwidth that should go to the client excesses or almost arrives to the limit BW value, a message is sent in order to acknowledge why is not possible to do that and a new Best-effort BW is assigned in order to have some BW until more data can be given
+			#if the bandwidth that should go to the client excesses or almost arrives to the limit BW value, a message is sent in order to acknowledge why is not possible to do that and a new Best-effort BW is assigned in order to have some BW until more data can be given
 			aux = min(Rm,Rl) - Ra
 			selDemand[j]['newSelBW'] = Rl + aux
 		else:
@@ -83,9 +92,9 @@ j = 1
 startBit = 99999
 stopBit = 0
 
-#When all clients are iterated, a second iterations is done in order to assign the corresponding Grant Map frames for each possible client 
-for i in orderedDemand:
-	aux = orderedDemand[i]
+#When all clients are iterated, a second iterations is done in order to assign the corresponding Grant Map frames for each possible client
+for i in demand:
+	aux = demand[i]
 	aux2 = selDemand[i]
 
 	#If the client is a premium one, more fps are assignet to give in order to have better resolution so more BW is needed to as the priority indicates
@@ -99,7 +108,7 @@ for i in orderedDemand:
 	#A new Dictionary is created with new elements per item regarding the start and stop frames
 	usedMap[j]['allocID'] = aux['allocID']
 	selBW = aux2['selBW']
-    
+	   
 	if selBW != strng:
 		usedMap[j]['usedBw'] = selBW
 	else:
